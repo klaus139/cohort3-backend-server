@@ -87,6 +87,7 @@ const loginUser = async(req, res) => {
 }
 
 const getAllUsers = async(req, res) => {
+    
     try{
         const allUsers = await Auth.find({})
         res.status(200).json({
@@ -116,7 +117,7 @@ const getAUser = async(req, res) => {
 }
 const updateProfile = async(req, res) => {
     try{
-       
+     
         const user = await Auth.findById(req.user._id);
         if(!user){
             res.status(400).json({
