@@ -98,6 +98,99 @@ const fetchProduct = asyncHandler(async (req, res) => {
       res.status(500).json({ message: "Something went wrong!"});
     }
 });
+
+const fetchAllProducts = asyncHandler(async(req, res) => {
+  try{
+    const products = await Product.find({}).populate('category').limit(12).sort({createdAt: -1})
+    res.json(products);
+
+  }catch(error){
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong!"})
+  }
+})
+
+const fetchProductById = asyncHandler(async(req, res) => {
+  try{
+    const product = await Product.findById(req.params.id);
+    if(product){
+      return res.json(product)
+    } else {
+      res.status(404)
+      throw new Error('Product not found')
+    }
+
+  }catch(error){
+    console.log(error)
+    res.status(500).json({message: error.message})
+  }
+});
+
+const addProductReview = asyncHandler(async(req, res) => {
+  try{
+    const {rating, comment} = req.body;
+    const product = await Product.findById(req.params.id);
+
+    if(product){
+      const alreadyReviewed = product.review.find((r) => r.user.toString() === req.user._id.toString())
+
+      if(alreadyReviewed){
+        res.status(400);
+        throw new Error('you already reviewed this product')
+      }
+
+      const review = {
+        name:req.user.firstname,
+        rating:Number(rating),
+        comment,
+        user:req.user._id
+      };
+
+      product.review.push(review);
+
+      product.numReviews = product.review.length;
+
+      product.rating = product.review.reduce((acc, item) => item.rating + acc, 0) / product.review.length;
+
+      await product.save();
+      res.status(201).json({message: "Review Added"})
+    }else{
+      res.status(404);
+      throw new Error('Product not found')
+    }
+
+
+
+
+  }catch(error){
+    console.log(error)
+    res.status(500).json({message: error.message});
+  }
+})
+
+const fetchTopProduct = asyncHandler(async(req, res) => {
+  try{
+    const products = await Product.find({}).sort({rating: -1}).limit(4);
+    res.json(products)
+
+  }catch(error){
+    console.log(error)
+    res.status(500).json({message: error.message});
+  }
+})
+
+const fetchNewProduct = asyncHandler(async(req, res) => {
+  try{
+    const products = await Product.find({}).sort({_id: -1}).limit(5)
+    res.json(products)
+
+  }catch(error){
+    console.log(error)
+    res.status(500).json({message: error.message});
+  }
+})
+
+
   
 
-export { addProduct, updateProduct, removeProduct, fetchProduct };
+export { addProduct, updateProduct, removeProduct, fetchProduct, fetchAllProducts, fetchProductById, addProductReview, fetchTopProduct, fetchNewProduct };
